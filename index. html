@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gemmes Royales 💎</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b2ff7">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(180deg,#2a0a5e,#7b2ff7,#ff2e88);min-height:100vh;color:white;overflow-x:hidden}
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+.stars span{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;opacity:.8;animation:twinkle 2s infinite}
+@keyframes twinkle{0%,100%{transform:scale(.5);opacity:.3}50%{transform:scale(1.4);opacity:1}}
+.wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;padding:14px 12px 20px;text-align:center}
+.logo{font-size:34px;font-weight:900;line-height:1;text-shadow:0 4px 0 #ff2e88,0 8px 20px rgba(0,0,0,.4);animation:float 2.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.sub{font-size:13px;opacity:.9;margin:4px 0 10px}
+.topbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.95);color:#2a0a5e;padding:8px 12px;border-radius:20px;font-weight:800;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.pill span{color:#ff2e88}
+.progress{height:14px;background:rgba(255,255,255,.25);border-radius:20px;overflow:hidden;margin:12px 6px}
+#bar{height:100%;width:0%;background:linear-gradient(90deg,#ffd700,#ff2e88,#00e5ff);transition:width .5s;border-radius:20px}
+#msg{height:34px;font-size:22px;font-weight:900;text-shadow:0 2px 10px rgba(0,0,0,.5);margin:4px}
+#msg.pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(.5)}50%{transform:scale(1.3) rotate(-2deg)}100%{transform:scale(1)}}
+#grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:10px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.gem{aspect-ratio:1;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:inset 0 -4px 0 rgba(0,0,0,.15),0 4px 10px rgba(0,0,0,.2);animation:shine 2s infinite}
+.gem:active{transform:scale(.9)}
+.gem.sel{transform:scale(1.15) rotate(5deg);box-shadow:0 0 0 3px #ffd700,0 0 20px #ffd700;z-index:2}
+.gem.match{animation:boom .45s}
+@keyframes boom{0%{transform:scale(1)}50%{transform:scale(1.4) rotate(10deg)}100%{transform:scale(0)}}
+@keyframes shine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.g0{background:#ff2e88}.g1{background:#00c9ff}.g2{background:#ffd700}.g3{background:#2eff7a}.g4{background:#b04bff}.g5{background:#ff7a00}
+.btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+button{border:0;padding:12px 16px;border-radius:999px;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.b1{background:#ffd700;color:#2a0a5e}.b2{background:white;color:#7b2ff7}.b3{background:#ff2e88;color:white}
+.combo{position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);font-size:42px;font-weight:900;text-shadow:0 4px 0 #ff2e88,0 10px 20px rgba(0,0,0,.5);pointer-events:none;z-index:99;display:none}
+.combo.show{display:block;animation:pop .6s}
+.confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:98;pointer-events:none;animation:fall 2s forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.footer{font-size:12px;opacity:.8;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+<div class="logo">💎 GEMMES<br>ROYALES 👑</div>
+<div class="sub">Aligne 3 gemmes identiques • Combo = plus de points !</div>
+<div class="topbar">
+<div class="pill">⭐ Score : <span id="score">0</span></div>
+<div class="pill">🎯 Objectif : <span id="goal">500</span></div>
+<div class="pill">🔥 Combo : <span id="comboTxt">x1</span></div>
+</div>
+<div class="progress"><div id="bar"></div></div>
+<div id="msg">À toi de jouer ! 💖</div>
+<div id="grid"></div>
+<div class="btns">
+<button class="b1" onclick="newGame()">🔄 Nouvelle partie</button>
+<button class="b2" onclick="toggleSound()" id="soundBtn">🔊 Son : ON</button>
+<button class="b3" onclick="hint()">💡 Aide</button>
+</div>
+<div class="footer">Niveau <span id="level">1</span> • Continue, tu es presque ! 👑</div>
+</div>
+<div class="combo" id="comboPop"></div>
+
+<script>
+let gems=['💎','🔷','💛','💚','💜','🧡'];
+let board=[], score=0, goal=500, level=1, combo=1, selected=null, soundOn=true, lock=false;
+let audioCtx=null;
+function initAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+function beep(freq,dur,type='sine',vol=0.2){ if(!soundOn) return; try{ initAudio(); let o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.start(); o.stop(audioCtx.currentTime+dur);}catch(e){} }
+function playClick(){ beep(600,0.08,'sine',0.15); }
+function playMatch(){ beep(800,0.12,'sine',0.2); setTimeout(()=>beep(1000,0.15,'sine',0.2),80); setTimeout(()=>beep(1300,0.2,'triangle',0.25),160); }
+function playWin(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.25,'triangle',0.3),i*120)); }
+function playBad(){ beep(200,0.2,'sawtooth',0.12); }
+function playCombo(){ beep(1200,0.1,'square',0.12); setTimeout(()=>beep(1500,0.15,'square',0.12),70); }
+
+function buildStars(){ let s=document.getElementById('stars'); for(let i=0;i<30;i++){ let e=document.createElement('span'); e.style.left=Math.random()*100+'%'; e.style.top=Math.random()*100+'%'; e.style.animationDelay=(Math.random()*2)+'s'; s.appendChild(e);} }
+function newBoard(){ board=[]; for(let i=0;i<36;i++) board.push(Math.floor(Math.random()*6)); }
+function render(){ let g=document.getElementById('grid'); g.innerHTML=''; board.forEach((v,i)=>{ let d=document.createElement('div'); d.className='g'+v+' gem'+(selected===i?' sel':''); d.textContent=gems[v]; d.onclick=()=>clickGem(i); g.appendChild(d); }); document.getElementById('score').textContent=score; document.getElementById('goal').textContent=goal; document.getElementById('level').textContent=level; document.getElementById('comboTxt').textContent='x'+combo; document.getElementById('bar').style.width=Math.min(100,score/goal*100)+'%'; }
+function clickGem(i){ if(lock) return; playClick(); if(selected===null){ selected=i; render(); return; } if(selected===i){ selected=null; render(); return; } let a=Math.min(selected,i), b=Math.max(selected,i); let adjacent=(b-a===1 && Math.floor(a/6)===Math.floor(b/6))||(b-a===6); if(!adjacent){ playBad(); showMsg('Pas à côté ! Essaie à côté 👉'); selected=null; render(); return; } [board[selected],board[i]]=[board[i],board[selected]]; selected=null; render(); setTimeout(()=>checkMatches(),200); }
+function checkMatches(){ let matched=new Set(); for(let r=0;r<6;r++) for(let c=0;c<4;c++){ let idx=r*6+c; if(board[idx]===board[idx+1] && board[idx]===board[idx+2]){ matched.add(idx); matched.add(idx+1); matched.add(idx+2);} } for(let c=0;c<6;c++) for(let r=0;r<4;r++){ let idx=r*6+c; if(board[idx]===board[idx+6] && board[idx]===board[idx+12]){ matched.add(idx); matched.add(idx+6); matched.add(idx+12);} } if(matched.size===0){ combo=1; showMsg('Oups ! Réessaie 💪'); render(); return; } let pts=matched.size*10*combo; score+=pts; if(matched.size>=5){ combo++; playCombo(); showCombo('INCROYABLE ! 🔥 x'+combo); showMsg('INCROYABLE ! +'+pts+' points !'); } else if(matched.size>=4){ combo++; showCombo('GÉNIAL ! ✨'); showMsg('GÉNIAL ! +'+pts+' points !'); } else { playMatch(); showMsg('SUPER ! +'+pts+' points 🎉'); } document.querySelectorAll('.gem').forEach((el,idx)=>{ if(matched.has(idx)) el.classList.add('match'); }); launchConfetti(); setTimeout(()=>{ matched.forEach(idx=>board[idx]=Math.floor(Math.random()*6)); combo=Math.min(combo+1,5); render(); if(score>=goal){ level++; goal+=300; score=0; playWin(); launchConfetti(); launchConfetti(); showMsg('BRAVO ! Niveau '+level+' débloqué 👑'); showCombo('NIVEAU '+level+' ! 👑'); } setTimeout(()=>checkMatches(),250); },450); }
+function showMsg(t){ let m=document.getElementById('msg'); m.textContent=t; m.classList.remove('pop'); void m.offsetWidth; m.classList.add('pop'); }
+function showCombo(t){ let c=document.getElementById('comboPop'); c.textContent=t; c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),900); }
+function launchConfetti(){ let colors=['#ffd700','#ff2e88','#00e5ff','#2eff7a','#b04bff']; for(let i=0;i<40;i++){ let e=document.createElement('div'); e.className='confetti'; e.style.left=Math.random()*100+'%'; e.style.background=colors[i%5]; e.style.animationDelay=(Math.random()*0.5)+'s'; document.body.appendChild(e); setTimeout(()=>e.remove(),2500);} }
+function newGame(){ score=0; combo=1; selected=null; newBoard(); render(); showMsg('Nouvelle partie ! À toi de jouer 💖'); playClick(); }
+function toggleSound(){ soundOn=!soundOn; document.getElementById('soundBtn').textContent=soundOn?'🔊 Son : ON':'🔇 Son : OFF'; if(soundOn) playClick(); }
+function hint(){ let m='Regarde les gemmes identiques à côté ! 💡'; showMsg(m); playClick(); }
+buildStars(); newBoard(); render();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+</script>
+</body>
+</html>
