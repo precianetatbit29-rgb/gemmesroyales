@@ -15,6 +15,11 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;height:100%}
+  <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 body{font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#fff;background:radial-gradient(circle at 50% 0,#5b3fd1,#2a1a73 60%,#170d45);display:flex;flex-direction:column;align-items:center;padding:10px 8px 0}
 h1{font-size:22px;margin:4px 0 8px;letter-spacing:1px;text-shadow:0 2px 6px #0008}
 h1 span{color:#ffd54a}
