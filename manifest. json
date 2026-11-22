@@ -1,0 +1,21 @@
+{
+  "name": "Gemmes Royales",
+  "short_name": "Gemmes Royales",
+  "description": "Jeu de gemmes royales - Match 3",
+  "start_url": "/gemmesroyales/",
+  "display": "standalone",
+  "background_color": "#1a0b2e",
+  "theme_color": "#1a0b2e",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/766/766277.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/766/766277.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
