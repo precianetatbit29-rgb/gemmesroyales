@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Gemmes Royales - Jeu Match 3</title>
+<meta name="description" content="Gemmes Royales : un jeu de match-3 gratuit. Alignez 3 gemmes ou plus, atteignez l'objectif et passez au niveau suivant !">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7251522297410896" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%}
+body{font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#fff;background:radial-gradient(circle at 50% 0,#5b3fd1,#2a1a73 60%,#170d45);display:flex;flex-direction:column;align-items:center;padding:10px 8px 0}
+h1{font-size:22px;margin:4px 0 8px;letter-spacing:1px;text-shadow:0 2px 6px #0008}
+h1 span{color:#ffd54a}
+#hud{width:min(94vw,480px);display:flex;gap:8px;margin-bottom:8px}
+.box{flex:1;background:#0004;border-radius:12px;padding:6px 8px;text-align:center;border:1px solid #fff2}
+.box small{display:block;font-size:11px;opacity:.75;text-transform:uppercase}
+.box b{font-size:20px}
+#barwrap{width:min(94vw,480px);height:10px;background:#0005;border-radius:6px;overflow:hidden;margin-bottom:10px}
+#bar{height:100%;width:0;background:linear-gradient(90deg,#ffd54a,#ff8a3d);transition:width .4s}
+#board{position:relative;width:min(94vw,480px);aspect-ratio:1;background:#0006;border-radius:14px;border:2px solid #ffffff30;touch-action:none;overflow:hidden}
+.tile{position:absolute;left:0;top:0;transition:transform .3s ease-in,opacity .25s,scale .25s}
+.tile::before{content:"";position:absolute;inset:10%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.75),transparent 35%),var(--c);clip-path:var(--shape);filter:drop-shadow(0 2px 2px #0008)}
+.tile.sel{scale:1.12;z-index:2}
+.tile.pop{opacity:0;scale:1.5}
+.t0{--c:#ef4444;--shape:circle(46%)}
+.t1{--c:#3b82f6;--shape:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.t2{--c:#22c55e;--shape:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)}
+.t3{--c:#facc15;--shape:polygon(50% 0,62% 36%,100% 38%,70% 60%,80% 98%,50% 76%,20% 98%,30% 60%,0 38%,38% 36%)}
+.t4{--c:#a855f7;--shape:inset(4% round 28%)}
+.t5{--c:#fb923c;--shape:polygon(50% 4%,98% 92%,2% 92%)}
+#msg{height:22px;margin:6px 0;font-size:14px;color:#ffd54a;text-align:center}
+#adbottom{width:min(94vw,480px);min-height:60px;margin-top:auto;padding-bottom:6px}
+#overlay{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#modal{background:linear-gradient(#4b32b0,#2a1a73);border:2px solid #ffd54a;border-radius:18px;padding:20px;width:min(92vw,360px);text-align:center;max-height:95vh;overflow:auto}
+#modal h2{margin:0 0 8px;color:#ffd54a}
+#modal p{margin:0 0 12px}
+#modal button{background:linear-gradient(#ffd54a,#ff9f1c);border:0;border-radius:24px;padding:12px 28px;font-size:17px;font-weight:700;color:#3a2200;cursor:pointer}
+#modalad{margin:12px 0;min-height:100px}
+footer{font-size:11px;opacity:.6;padding:4px 0 8px}
+footer a{color:#fff}
+</style>
+</head>
+<body>
+<h1>💎 Gemmes <span>Royales</span></h1>
+<div id="hud">
+  <div class="box"><small>Niveau</small><b id="lvl">1</b></div>
+  <div class="box"><small>Score / Objectif</small><b id="score">0</b><span id="goal" style="font-size:12px;opacity:.8"></span></div>
+  <div class="box"><small>Coups</small><b id="moves">0</b></div>
+  <div class="box"><small>Record</small><b id="best">0</b></div>
+</div>
+<div id="barwrap"><div id="bar"></div></div>
+<div id="board"></div>
+<div id="msg"></div>
+<div id="adbottom">
+  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7251522297410896" data-ad-slot="1111111111" data-ad-format="auto" data-full-width-responsive="true"></ins>
+</div>
+<footer><a href="privacy.html">Politique de confidentialité</a></footer>
+<div id="overlay"><div id="modal">
+  <h2 id="mt"></h2><p id="mp"></p>
+  <div id="modalad"></div>
+  <button id="mb"></button>
+</div></div>
+<script>
+try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}
+const $=id=>document.getElementById(id);
+const N=8,T=6,sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const boardEl=$('board');
+let size=0,board=[],score=0,moves=0,level=1,goal=0,busy=false,sel=null,start=null,best=0;
+try{best=+localStorage.getItem('gr_best')||0}catch(e){}
+const rnd=()=>Math.floor(Math.random()*T);
+function place(t){t.el.style.transform='translate('+t.c*size+'px,'+t.r*size+'px)';}
+function mk(type,r,c){const el=document.createElement('div');el.className='tile t'+type;el.style.width=el.style.height=size+'px';boardEl.appendChild(el);const t={type,el,r,c};place(t);return t;}
+function layout(){size=boardEl.clientWidth/N;board.forEach(row=>row.forEach(t=>{if(t){t.el.style.width=t.el.style.height=size+'px';place(t);}}));}
+addEventListener('resize',layout);
+function hud(){$('lvl').textContent=level;$('score').textContent=score;$('goal').textContent=' / '+goal;$('moves').textContent=moves;$('best').textContent=best;$('bar').style.width=Math.min(100,score/goal*100)+'%';}
+function say(t){$('msg').textContent=t;if(t)setTimeout(()=>{if($('msg').textContent===t)$('msg').textContent=''},1500);}
+function findMatches(){const s=new Set();for(let r=0;r<N;r++){let run=1;for(let c=1;c<=N;c++){if(c<N&&board[r][c]&&board[r][c-1]&&board[r][c].type===board[r][c-1].type)run++;else{if(run>=3)for(let k=1;k<=run;k++)s.add(board[r][c-k]);run=1;}}}for(let c=0;c<N;c++){let run=1;for(let r=1;r<=N;r++){if(r<N&&board[r][c]&&board[r-1][c]&&board[r][c].type===board[r-1][c].type)run++;else{if(run>=3)for(let k=1;k<=run;k++)s.add(board[r-k][c]);run=1;}}}return s;}
+function hasMove(){for(let r=0;r<N;r++)for(let c=0;c<N;c++){for(const [dr,dc] of [[0,1],[1,0]]){const r2=r+dr,c2=c+dc;if(r2>=N||c2>=N)continue;const a=board[r][c],b=board[r2][c2];board[r][c]=b;board[r2][c2]=a;const ok=findMatches().size>0;board[r][c]=a;board[r2][c2]=b;if(ok)return true;}}return false;}
+function reshuffle(){let g=0;do{board.forEach(row=>row.forEach(t=>{t.type=rnd();t.el.className='tile t'+t.type;}));g++;}while((findMatches().size||!hasMove())&&g<300);}
+function swapT(a,b){board[a.r][a.c]=b;board[b.r][b.c]=a;[a.r,b.r]=[b.r,a.r];[a.c,b.c]=[b.c,a.c];place(a);place(b);}
+function gravity(){for(let c=0;c<N;c++){let w=N-1;for(let r=N-1;r>=0;r--){const t=board[r][c];if(t){if(r!==w){board[w][c]=t;board[r][c]=null;t.r=w;place(t);}w--;}}const news=[];for(let r=w;r>=0;r--){const t=mk(rnd(),r-(w+1),c);board[r][c]=t;news.push([t,r]);}void boardEl.offsetWidth;news.forEach(([t,r])=>{t.r=r;place(t);});}}
+async function resolve(){let chain=0;while(true){const m=findMatches();if(!m.size)break;chain++;score+=m.size*10*chain+(m.size>3?(m.size-3)*20:0);if(chain>1)say('Combo x'+chain+' !');m.forEach(t=>{t.el.classList.add('pop');board[t.r][t.c]=null;});hud();await sleep(260);m.forEach(t=>t.el.remove());gravity();await sleep(380);}}
+async function trySwap(a,b){if(busy)return;busy=true;clearSel();swapT(a,b);await sleep(230);if(!findMatches().size){swapT(a,b);await sleep(230);busy=false;return;}moves--;hud();await resolve();afterMove();}
+function afterMove(){if(score>=goal){win();return;}if(moves<=0){lose();return;}if(!hasMove()){say('Pas de coup possible : mélange !');reshuffle();}busy=false;}
+function showOverlay(title,text,btn,fn){$('mt').textContent=title;$('mp').textContent=text;$('mb').textContent=btn;$('mb').onclick=()=>{$('overlay').style.display='none';fn();};const ad=$('modalad');ad.innerHTML='<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7251522297410896" data-ad-slot="2222222222" data-ad-format="auto" data-full-width-responsive="true"></ins>';try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}$('overlay').style.display='flex';}
+function saveBest(){if(score>best){best=score;try{localStorage.setItem('gr_best',best)}catch(e){}}hud();}
+function win(){saveBest();showOverlay('🎉 Niveau '+level+' réussi !','Score : '+score+' • Coups restants : '+moves,'Niveau suivant',()=>startLevel(level+1));}
+function lose(){saveBest();showOverlay('Plus de coups','Score : '+score+' / objectif '+goal,'Rejouer',()=>startLevel(level));}
+function startLevel(l){level=l;score=0;moves=20+Math.min(l,10);goal=500+l*300;boardEl.innerHTML='';board=[];size=boardEl.clientWidth/N;for(let r=0;r<N;r++){board[r]=[];for(let c=0;c<N;c++)board[r][c]=mk(rnd(),r,c);}reshuffle();hud();busy=false;sel=null;start=null;}
+function tileAt(e){const rect=boardEl.getBoundingClientRect();const c=Math.floor((e.clientX-rect.left)/size),r=Math.floor((e.clientY-rect.top)/size);return (r>=0&&r<N&&c>=0&&c<N)?board[r][c]:null;}
+function clearSel(){if(sel){sel.el.classList.remove('sel');sel=null;}}
+const adj=(a,b)=>Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1;
+boardEl.addEventListener('pointerdown',e=>{if(busy)return;const t=tileAt(e);if(!t)return;if(sel&&sel!==t&&adj(sel,t)){const s=sel;trySwap(s,t);return;}clearSel();sel=t;t.el.classList.add('sel');start={x:e.clientX,y:e.clientY,t};});
+boardEl.addEventListener('pointermove',e=>{if(!start||busy)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.max(Math.abs(dx),Math.abs(dy))<size*0.4)return;let r=start.t.r,c=start.t.c;if(Math.abs(dx)>Math.abs(dy))c+=dx>0?1:-1;else r+=dy>0?1:-1;const a=start.t;start=null;if(r<0||r>=N||c<0||c>=N)return;trySwap(a,board[r][c]);});
+addEventListener('pointerup',()=>{start=null;});
+startLevel(1);
+</script>
+</body>
+                      </html>
